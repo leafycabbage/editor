@@ -29,7 +29,8 @@ class KatexOutput extends React.Component {
     }
 
     this._timer = setTimeout(() => {
-        this.props.content = "Hello you";
+        console.log(this.refs.container)
+        this.refs.container.innerHTML = "Hello you";
       /*katex.render(
         this.props.content,
         this.refs.container,
@@ -58,7 +59,7 @@ class KatexOutput extends React.Component {
   }
 }
 
-export default class TeXBlock extends React.Component {
+export default class Block extends React.Component {
   constructor(props) {
     super(props);
     this.state = {editMode: false};

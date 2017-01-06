@@ -14,11 +14,10 @@
 
 'use strict';
 
-var BlockEditor = require('./components/BlockEditor');
-var React = require('react');
-var ReactDOM =  require('react-dom');
+import BlockEditor from './components/BlockEditor';
+import React from 'react';
+import ReactDOM from 'react-dom';
 
-console.log('IN HERE')
 ReactDOM.render(
   <BlockEditor />,
   document.getElementById('target')
