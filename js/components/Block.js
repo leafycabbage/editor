@@ -17,184 +17,237 @@
 import React from 'react';
 import {Entity} from 'draft-js';
 import Slider from 'material-ui/Slider';
-import FontIcon from 'material-ui/FontIcon';
-import {Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle} from 'material-ui/Toolbar';
+import FloatingActionButton from 'material-ui/FloatingActionButton';
+import ContentAdd from 'material-ui/svg-icons/content/add';
+import BlockEditor from './BlockEditor.js';
 
 const iconStyles = {
-  marginRight: 24,
+    marginRight: 24,
 };
 
 class KatexOutput extends React.Component {
-  constructor(props) {
-    super(props);
-    this._timer = null;
-  }
-
-  _update() {
-    if (this._timer) {
-      clearTimeout(this._timer);
+    constructor(props) {
+        super(props);
+        this._timer = null;
     }
 
-    this._timer = setTimeout(() => {
-        console.log(this.refs.container)
-        this.refs.container.innerHTML = "Hello you";
-      /*katex.render(
-        this.props.content,
-        this.refs.container,
-        {displayMode: true}
-    );*/
-    }, 0);
-  }
-
-  componentDidMount() {
-    this._update();
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.content !== this.props.content) {
-      this._update();
+    _update() {
+        if (this._timer) {
+            clearTimeout(this._timer);
+        }
     }
-  }
 
-  componentWillUnmount() {
-    clearTimeout(this._timer);
-    this._timer = null;
-  }
+    componentDidMount() {
+        this._update();
+    }
 
-  render() {
-    return <div ref="container" onClick={this.props.onClick} />;
-  }
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.content !== this.props.content) {
+            this._update();
+        }
+    }
+
+    componentWillUnmount() {
+        clearTimeout(this._timer);
+        this._timer = null;
+    }
+
+    render() {
+        return <div ref="container" style={this.props.style} onClick={this.props.onClick}>
+            <BlockEditor />
+        </div>;
+    }
 }
 
 export default class Block extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {editMode: false};
+    constructor(props) {
+        console.log('We have a match')
+        super(props);
 
-    this._onClick = () => {
-      if (this.state.editMode) {
-        return;
-      }
+        this.state = {
+            editMode: false,
 
-      this.setState({
-        editMode: true,
-        texValue: this._getValue(),
-      }, () => {
-        this._startEdit();
-      });
-    };
+            selectMode: false,
+            selectionRowStart: 0,
+            selectionRowEnd: 0,
+            selectionColStart: 0,
+            selectionColEnd: 0,
+            selectedMode: false
+        };
 
-    this._onValueChange = evt => {
-      var value = evt.target.value;
-      var invalid = false;
-      try {
-        katex.__parse(value);
-      } catch (e) {
-        invalid = true;
-      } finally {
-        this.setState({
-          invalidTeX: invalid,
-          texValue: value,
-        });
-      }
-    };
+        this._onClick = () => {
+            if (this.state.editMode) {
+                return;
+            }
 
-    this._save = () => {
-      var entityKey = this.props.block.getEntityAt(0);
-      Entity.mergeData(entityKey, {content: this.state.texValue});
-      this.setState({
-        invalidTeX: false,
-        editMode: false,
-        texValue: null,
-      }, this._finishEdit);
-    };
+            this.setState({
+                editMode: true,
+                rows: this._getRows(),
+                cols: this._getCols()
+            }, () => {
+                this._startEdit();
+            });
+        };
 
-    this._remove = () => {
-      this.props.blockProps.onRemove(this.props.block.getKey());
-    };
-    this._startEdit = () => {
-      this.props.blockProps.onStartEdit(this.props.block.getKey());
-    };
-    this._finishEdit = () => {
-      this.props.blockProps.onFinishEdit(this.props.block.getKey());
-    };
-  }
+        /* Handle Selection of the Block Grid */
+        this._onSelectionRemove = evt => {
+            this.setState({
+                selectMode: false,
+                selectedMode: false,
+                selectionRowStart: 0,
+                selectionRowEnd: 0,
+                selectionColStart: 0,
+                selectionColEnd: 0
+            })
+        }
 
-  _getValue() {
-    return Entity
-      .get(this.props.block.getEntityAt(0))
-      .getData()['content'];
-  }
+        this._onSelectionStart = evt => {
 
-  render() {
-    var texContent = null;
-    if (this.state.editMode) {
-      if (this.state.invalidTeX) {
-        texContent = '';
-      } else {
-        texContent = this.state.texValue;
-      }
-    } else {
-      texContent = this._getValue();
+            var coordinates = evt.target.id.split('/')
+
+            this.setState({
+                selectMode: true,
+                selectionRowStart: coordinates[0],
+                selectionRowEnd: coordinates[0],
+                selectionColStart: coordinates[1],
+                selectionColEnd: coordinates[1]
+            })
+        }
+
+        this._onSelectionMove = evt => {
+
+            if (!this.state.selectMode) {
+                return
+            }
+
+            var coordinates = evt.target.id.split('/')
+
+            this.setState({
+                selectionRowStart: Math.min(this.state.selectionRowStart, coordinates[0]),
+                selectionRowEnd: Math.max(this.state.selectionRowStart, coordinates[0]),
+                selectionColStart: Math.min(this.state.selectionColStart, coordinates[1]),
+                selectionColEnd: Math.max(this.state.selectionColStart, coordinates[1])
+            })
+        }
+
+        this._onSelectionStop = evt => {
+
+            var coordinates = evt.target.id.split('/')
+
+            this.setState({
+                selectMode: false,
+                selectedMode: true,
+                selectionRowStart: Math.min(this.state.selectionRowStart, coordinates[0]),
+                selectionRowEnd: Math.max(this.state.selectionRowStart, coordinates[0]),
+                selectionColStart: Math.min(this.state.selectionColStart, coordinates[1]),
+                selectionColEnd: Math.max(this.state.selectionColStart, coordinates[1])
+            })
+        }
+
+        this._onValueChange = evt => {
+            var value = evt.target.value;
+            var invalid = false;
+            try {
+                katex.__parse(value);
+            } catch (e) {
+                invalid = true;
+            } finally {
+                this.setState({
+                    invalidTeX: invalid,
+                    texValue: value,
+                });
+            }
+        };
+
+        this._save = () => {
+            var entityKey = this.props.block.getEntityAt(0);
+            Entity.mergeData(entityKey, {content: this.state.texValue});
+            this.setState({
+                invalidTeX: false,
+                editMode: false,
+                texValue: null,
+            }, this._finishEdit);
+        };
+
+        this._remove = () => {
+            this.props.blockProps.onRemove(this.props.block.getKey());
+        };
+        this._startEdit = () => {
+            this.props.blockProps.onStartEdit(this.props.block.getKey());
+        };
+        this._finishEdit = () => {
+            this.props.blockProps.onFinishEdit(this.props.block.getKey());
+        };
     }
 
-    var className = 'TeXEditor-tex';
-    if (this.state.editMode) {
-      className += ' TeXEditor-activeTeX';
+    _getRows() {
+        return Entity
+            .get(this.props.block.getEntityAt(0))
+            .getData()['rows'];
     }
 
-    var editPanel = null;
-    if (this.state.editMode) {
-      var buttonClass = 'TeXEditor-saveButton';
-      if (this.state.invalidTeX) {
-        buttonClass += ' TeXEditor-invalidButton';
-      }
+    _getCols() {
+        return Entity
+            .get(this.props.block.getEntityAt(0))
+            .getData()['cols']
+    }
 
-      editPanel =
-        <div className="TeXEditor-panel">
-            <div className="TeXEditor-buttons">
-                Width <Slider max={100} min={0} step={1} />
-                Alignment
-                <Toolbar>
-                    <ToolbarGroup>
-                        <FontIcon onClick={this._onAlignChange("left")} className="material-icons" style={iconStyles}>format_align_left</FontIcon>
-                        <FontIcon onClick={this._onAlignChange("center")} className="material-icons" style={iconStyles}>format_align_center</FontIcon>
-                        <FontIcon onClick={this._onAlignChange("right")} className="material-icons" style={iconStyles}>format_align_right</FontIcon>
-                    </ToolbarGroup>
-                </Toolbar>
-                <br/>
-                <button
-                    className={buttonClass}
-                    disabled={this.state.invalidTeX}
-                    onClick={this._save}>
-                    {this.state.invalidTeX ? 'Invalid TeX' : 'Done'}
-                </button>
+    render() {
+        var className = 'block-editor';
+        if (this.state.editMode) {
+            className += ' block-editor-active';
+        }
+
+        var output = null;
+        var editPanel = null;
+        var divStyle = null;
+
+        if (this.state.editMode) {
+            editPanel =
+                <div className="block-editor-panel">
+                    <div className="grid" onBlur={this._onSelectionRemove} onMouseDown={this._onSelectionStart} onMouseMove={this._onSelectionMove} onMouseUp={this._onSelectionStop}>
+                        {this.state.rows.map(function(row, rowIdx) {
+                            return this.state.cols.map(function(col, colIdx) {
+                                var map = (rowIdx + 1) + "/" + (colIdx + 1) + "/" + (rowIdx + 2) + "/" + (colIdx + 2);
+                                var isSelected =
+                                    (rowIdx + 1) >= this.state.selectionRowStart &&
+                                    (rowIdx + 1) <= this.state.selectionRowEnd &&
+                                    (colIdx + 1) >= this.state.selectionColStart &&
+                                    (colIdx + 1) <= this.state.selectionColEnd
+
+                                var style = {
+                                    minWidth: "50px",
+                                    minHeight: "50px",
+                                    gridArea: map,
+                                    backgroundColor: isSelected ? "#cccccc" : "#ffffff"
+                                };
+
+                                return (<div id={map} key={map} style={style}></div>);
+                            }.bind(this))
+                        }.bind(this))}
+                    </div>
+
+                    <div className="block-editor-buttons">
+                        <FloatingActionButton disabled={!this.state.selectedMode} onClick={this._add}>
+                            <ContentAdd />
+                        </FloatingActionButton>
+                    </div>
+                </div>;
+
+            divStyle = {
+                backgroundColor: "#cccccc",
+                opacity: 0.8
+            }
+        } else {
+            output =
+                <KatexOutput style={divStyle} onClick={this._onClick} />
+        }
+
+        return (
+            <div className={className}>
+                {output}
+                {editPanel}
             </div>
-          <textarea
-            className="TeXEditor-texValue"
-            onChange={this._onValueChange}
-            ref="textarea"
-            value={this.state.texValue}
-          />
-          <div className="TeXEditor-buttons">
-            <button
-              className={buttonClass}
-              disabled={this.state.invalidTeX}
-              onClick={this._save}>
-              {this.state.invalidTeX ? 'Invalid TeX' : 'Done'}
-            </button>
-            <button className="TeXEditor-removeButton" onClick={this._remove}>
-              Remove
-            </button>
-          </div>
-        </div>;
-    }
-
-    return (
-      <div className={className}>
-        <KatexOutput content={texContent} onClick={this._onClick} />
-        {editPanel}
-      </div>
-    );
+        );
   }
 }

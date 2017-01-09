@@ -7,9 +7,26 @@
     <link rel="stylesheet" href="node_modules/draft-js/dist/Draft.css" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/es6-shim/0.34.4/es6-shim.min.js"></script>
+
+    <style>
+            main {
+                display: grid;
+                grid:
+                    "h h h"
+                    "a b c"
+                    "f f f";
+                grid-template-columns: auto 1fr 20%;
+            }
+            header  { grid-area: h; }
+            article { grid-area: b; min-width: 12em; }
+            nav     { grid-area: a; /* auto min-width */ }
+            aside   { grid-area: c; min-width: 12em; }
+            footer  { grid-area: f; }
+    </style>
   </head>
   <body>
     <div id="target"></div>
+
     <script src="http://localhost:3000/webpack-dev-server.js"></script>
     <script src="js/app.js"></script>
   </body>

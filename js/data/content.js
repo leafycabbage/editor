@@ -12,57 +12,72 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {convertFromRaw} from 'draft-js';
+import {convertFromHTML, ContentState} from 'draft-js';
 
+var htmlContent = (
+    '<html>' +
+        '<head></head>' +
+        '<body>' +
+            '<header>This is the header</header>' +
+            '<nav>This is the nav</nav>' +
+            '<main>' +
+            'This is the main content' +
+            '</main>' +
+            '<aside>This is the aside</aside>' +
+            '<section>This is a section</section>' +
+        '</body>' +
+    '</html>'
+)
+
+/*
 var rawContent = {
-  blocks: [
-    {
-      text: 'This is a Draft-based editor that supports TeX rendering.',
-      type: 'unstyled',
-    },
-    {
-      text: '',
-      type: 'unstyled',
-    },
-    {
-      text: (
-        'Each TeX block below is represented as a DraftEntity object and ' +
-        'rendered using Khan Academy\'s KaTeX library.'
-      ),
-      type: 'unstyled',
-    },
-    {
-      text: '',
-      type: 'unstyled',
-    },
-    {
-      text: 'Click any TeX block to edit.',
-      type: 'unstyled',
-    },
-    {
-      text: ' ',
-      type: 'atomic',
-      entityRanges: [{offset: 0, length: 1, key: 'first'}],
-    },
-    {
-      text: 'You can also insert a new TeX block at the cursor location.',
-      type: 'unstyled',
-    },
-  ],
+    blocks: [
+        {
+            text: 'This is a Draft-based editor that supports TeX rendering.',
+            type: 'unstyled',
+        },
+        {
+            text: '',
+            type: 'unstyled',
+        },
+        {
+            text: (
+                'Each TeX block below is represented as a DraftEntity object and ' +
+                'rendered using Khan Academy\'s KaTeX library.'
+            ),
+            type: 'unstyled',
+        },
+        {
+            text: '',
+            type: 'unstyled',
+        },
+        {
+            text: 'Click any TeX block to edit.',
+            type: 'unstyled',
+        },
+        {
+            text: ' ',
+            type: 'atomic',
+            entityRanges: [{offset: 0, length: 1, key: 'first'}],
+        },
+        {
+            text: 'You can also insert a new TeX block at the cursor location.',
+            type: 'unstyled',
+        },
+    ],
 
-  entityMap: {
-    first: {
-      type: 'TOKEN',
-      mutability: 'IMMUTABLE',
-      data: {
-        content: (
-          '\\left( \\sum_{k=1}^n a_k b_k \\right)^{\\!\\!2} \\leq\n' +
-          '\\left( \\sum_{k=1}^n a_k^2 \\right)\n' +
-          '\\left( \\sum_{k=1}^n b_k^2 \\right)'
-        ),
-      },
+    entityMap: {
+        first: {
+            type: 'TOKEN',
+            mutability: 'IMMUTABLE',
+            data: {
+                rows: ["a", "b", "c"],
+                cols: ["a", "b", "c", "d", "e"]
+            },
+        },
     },
-  },
-};
+}; */
 
-export var content = convertFromRaw(rawContent);
+const blocksFromHTML = convertFromHTML(htmlContent);
+console.log("Done content")
+export var content = ContentState.createFromBlockArray(blocksFromHTML);
