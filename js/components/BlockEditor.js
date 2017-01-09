@@ -19,6 +19,7 @@ import {Map} from 'immutable';
 import React from 'react';
 
 import Block from './Block';
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import {content} from '../data/content';
 import {insertBlock} from '../modifiers/insertBlock';
 import {removeBlock} from '../modifiers/removeBlock';
@@ -89,9 +90,11 @@ export default class BlockEditor extends React.Component {
    */
   render() {
     return (
+    <MuiThemeProvider>
       <div className="TexEditor-container">
         <div className="TeXEditor-root">
           <div className="TeXEditor-editor" onClick={this._focus}>
+
             <Editor
               blockRendererFn={this._blockRenderer}
               editorState={this.state.editorState}
@@ -102,12 +105,15 @@ export default class BlockEditor extends React.Component {
               ref="editor"
               spellCheck={true}
             />
+
           </div>
         </div>
+
         <button onClick={this._insertTeX} className="TeXEditor-insert">
           {'Insert new TeX'}
         </button>
       </div>
+    </MuiThemeProvider>
     );
   }
 }

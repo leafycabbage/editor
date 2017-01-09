@@ -14,8 +14,15 @@
 
 'use strict';
 
-var React = require('react');
+import React from 'react';
 import {Entity} from 'draft-js';
+import Slider from 'material-ui/Slider';
+import FontIcon from 'material-ui/FontIcon';
+import {Toolbar, ToolbarGroup, ToolbarSeparator, ToolbarTitle} from 'material-ui/Toolbar';
+
+const iconStyles = {
+  marginRight: 24,
+};
 
 class KatexOutput extends React.Component {
   constructor(props) {
@@ -145,6 +152,24 @@ export default class Block extends React.Component {
 
       editPanel =
         <div className="TeXEditor-panel">
+            <div className="TeXEditor-buttons">
+                Width <Slider max={100} min={0} step={1} />
+                Alignment
+                <Toolbar>
+                    <ToolbarGroup>
+                        <FontIcon onClick={this._onAlignChange("left")} className="material-icons" style={iconStyles}>format_align_left</FontIcon>
+                        <FontIcon onClick={this._onAlignChange("center")} className="material-icons" style={iconStyles}>format_align_center</FontIcon>
+                        <FontIcon onClick={this._onAlignChange("right")} className="material-icons" style={iconStyles}>format_align_right</FontIcon>
+                    </ToolbarGroup>
+                </Toolbar>
+                <br/>
+                <button
+                    className={buttonClass}
+                    disabled={this.state.invalidTeX}
+                    onClick={this._save}>
+                    {this.state.invalidTeX ? 'Invalid TeX' : 'Done'}
+                </button>
+            </div>
           <textarea
             className="TeXEditor-texValue"
             onChange={this._onValueChange}
