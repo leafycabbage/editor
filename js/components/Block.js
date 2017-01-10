@@ -16,16 +16,11 @@
 
 import React from 'react';
 import {Entity} from 'draft-js';
-import Slider from 'material-ui/Slider';
 import FloatingActionButton from 'material-ui/FloatingActionButton';
 import ContentAdd from 'material-ui/svg-icons/content/add';
 import BlockEditor from './BlockEditor.js';
 
-const iconStyles = {
-    marginRight: 24,
-};
-
-class KatexOutput extends React.Component {
+class HTMLOutput extends React.Component {
     constructor(props) {
         super(props);
         this._timer = null;
@@ -53,15 +48,16 @@ class KatexOutput extends React.Component {
     }
 
     render() {
-        return <div ref="container" style={this.props.style} onClick={this.props.onClick}>
-            <BlockEditor />
-        </div>;
+        return (
+            <div ref="container" style={this.props.style} onClick={this.props.onClick}>
+                {this.props.children}
+            </div>
+        )
     }
 }
 
 export default class Block extends React.Component {
     constructor(props) {
-        console.log('We have a match')
         super(props);
 
         this.state = {
@@ -181,6 +177,7 @@ export default class Block extends React.Component {
     }
 
     _getRows() {
+        console.log("Entity ", this.props.block)
         return Entity
             .get(this.props.block.getEntityAt(0))
             .getData()['rows'];
@@ -240,7 +237,9 @@ export default class Block extends React.Component {
             }
         } else {
             output =
-                <KatexOutput style={divStyle} onClick={this._onClick} />
+                <HTMLOutput onClick={this._onClick}>
+                    {this.props.block.getText()}
+                </HTMLOutput>
         }
 
         return (

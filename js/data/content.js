@@ -12,21 +12,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import {convertFromHTML, ContentState} from 'draft-js';
+import {convertFromHTML, getSafeBodyFromHTML, ContentState, DefaultDraftBlockRenderMap} from 'draft-js';
+import Immutable from 'immutable';
+import Block from '../components/Block';
+import React from 'react';
+
+const blockRenderMap = Immutable.Map({
+    'block': {
+        element: 'section'
+    }
+});
+
+const extendedBlockRenderMap = DefaultDraftBlockRenderMap.merge(blockRenderMap);
 
 var htmlContent = (
-    '<html>' +
-        '<head></head>' +
-        '<body>' +
-            '<header>This is the header</header>' +
-            '<nav>This is the nav</nav>' +
-            '<main>' +
-            'This is the main content' +
-            '</main>' +
-            '<aside>This is the aside</aside>' +
-            '<section>This is a section</section>' +
-        '</body>' +
-    '</html>'
+    '<h3>This is h3</h3>' +
+    '<section>This is a section</section>' +
+    '<section>This is a section</section>' +
+    '<section>This is a section</section>'
 )
 
 /*
@@ -78,6 +81,7 @@ var rawContent = {
     },
 }; */
 
-const blocksFromHTML = convertFromHTML(htmlContent);
-console.log("Done content")
-export var content = ContentState.createFromBlockArray(blocksFromHTML);
+const blocksFromHTML = convertFromHTML(htmlContent, getSafeBodyFromHTML, extendedBlockRenderMap);
+const content = ContentState.createFromBlockArray(blocksFromHTML);
+
+export {content, blockRenderMap, extendedBlockRenderMap}

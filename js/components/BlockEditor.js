@@ -15,7 +15,6 @@
 'use strict';
 
 import Draft from 'draft-js';
-import {DefaultDraftBlockRenderMap} from 'draft-js';
 import Immutable from 'immutable';
 import {Map} from 'immutable';
 import React from 'react';
@@ -23,53 +22,48 @@ import React from 'react';
 import Block from './Block';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 
-import {content} from '../data/content';
+import {content, blockRenderMap, extendedBlockRenderMap} from '../data/content';
 import {insertBlock} from '../modifiers/insertBlock';
 import {removeBlock} from '../modifiers/removeBlock';
 
 var {Editor, EditorState, RichUtils} = Draft;
 
-const blockRenderMap = Immutable.Map({
-  'MyCustomBlock': {
-      // element is used during paste or html conversion to auto match your component;
-      // it is also retained as part of this.props.children and not stripped out
-      element: 'section'
-  }
-});
-
-const extendedBlockRenderMap = Draft.DefaultDraftBlockRenderMap.merge(blockRenderMap);
-
-class MyCustomBlock extends React.Component {
-  constructor(props) {
-      console.log("HERE")
-    super(props);
-  }
-
-  render() {
-    return (
-      <div className='MyCustomBlock'>
-        {/* here, this.props.children contains a <section> container, as that was the matching element */}
-        {this.props.children}
-      </div>
-    );
-  }
-}
-
 export default class BlockEditor extends React.Component {
     constructor(props) {
+
         super(props);
+
         this.state = {
             editorState: EditorState.createWithContent(content),
             liveTeXEdits: Map(),
         };
 
         this._blockRenderer = (block) => {
-            console.log(block.getType())
+            console.log("We have a new type ", block.getType())
             if (block.getType() === 'atomic') {
                 return {
                     component: Block,
                     editable: false,
                     props: {
+                        onStartEdit: (blockKey) => {
+                            var {liveTeXEdits} = this.state;
+                            this.setState({liveTeXEdits: liveTeXEdits.set(blockKey, true)});
+                        },
+                        onFinishEdit: (blockKey) => {
+                            var {liveTeXEdits} = this.state;
+                            this.setState({liveTeXEdits: liveTeXEdits.remove(blockKey)});
+                        },
+                        onRemove: (blockKey) => this._removeTeX(blockKey),
+                    },
+                };
+            }
+            if (block.getType() == 'block') {
+                console.log(block.getText())
+                return {
+                    component: Block,
+                    editable: false,
+                    props: {
+                        children: block.getText(),
                         onStartEdit: (blockKey) => {
                             var {liveTeXEdits} = this.state;
                             this.setState({liveTeXEdits: liveTeXEdits.set(blockKey, true)});
@@ -126,9 +120,7 @@ export default class BlockEditor extends React.Component {
     ref="editor"
     spellCheck={true}*/
     render() {
-
-
-        console.log(extendedBlockRenderMap)
+        console.log(blockRenderMap);
         return (
             <MuiThemeProvider>
                 <div className="TexEditor-container">
@@ -138,7 +130,12 @@ export default class BlockEditor extends React.Component {
                                 blockRenderMap={extendedBlockRenderMap}
                                 blockRendererFn={this._blockRenderer}
                                 editorState={this.state.editorState}
-
+                                handleKeyCommand={this._handleKeyCommand}
+                                onChange={this._onChange}
+                                placeholder="Start a document..."
+                                readOnly={this.state.liveTeXEdits.count()}
+                                ref="editor"
+                                spellCheck={true}
                             />
                         </div>
                     </div>
