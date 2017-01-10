@@ -19,6 +19,13 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 ReactDOM.render(
-  <BlockEditor />,
+  <BlockEditor>
+    <body>
+        <header>
+            <section>This is a header</section>
+        </header>
+        <section>Section component</section>
+    </body>
+  </BlockEditor>,
   document.getElementById('target')
 );

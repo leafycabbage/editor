@@ -14,11 +14,17 @@
 
 'use strict';
 
+import _ from 'lodash';
 import React from 'react';
 import {Entity} from 'draft-js';
 import FloatingActionButton from 'material-ui/FloatingActionButton';
 import ContentAdd from 'material-ui/svg-icons/content/add';
+import ContentSave from 'material-ui/svg-icons/content/save';
 import BlockEditor from './BlockEditor.js';
+
+import {WidthProvider, Responsive} from 'react-grid-layout';
+
+var ResponsiveReactGridLayout = WidthProvider(Responsive);
 
 class HTMLOutput extends React.Component {
     constructor(props) {
@@ -48,6 +54,10 @@ class HTMLOutput extends React.Component {
     }
 
     render() {
+        // <ResponsiveReactGridLayout>
+        //     {this.props.children}
+        //     {_.map(this.state.items, this._createElement)}
+        // </ResponsiveReactGridLayout>
         return (
             <div ref="container" style={this.props.style} onClick={this.props.onClick}>
                 {this.props.children}
@@ -56,112 +66,88 @@ class HTMLOutput extends React.Component {
     }
 }
 
-export default class Block extends React.Component {
+class Block extends React.Component {
     constructor(props) {
         super(props);
 
         this.state = {
             editMode: false,
 
-            selectMode: false,
-            selectionRowStart: 0,
-            selectionRowEnd: 0,
-            selectionColStart: 0,
-            selectionColEnd: 0,
-            selectedMode: false
+            items: [{
+                i: "Initial",
+                x: 0,
+                y: 0,
+                w: 12,
+                h: 5
+            }],
+
+            newCounter: 0
         };
 
         this._onClick = () => {
+
+            console.log('HERE we are')
             if (this.state.editMode) {
                 return;
             }
 
             this.setState({
-                editMode: true,
-                rows: this._getRows(),
-                cols: this._getCols()
+                editMode: true
             }, () => {
                 this._startEdit();
             });
         };
 
-        /* Handle Selection of the Block Grid */
-        this._onSelectionRemove = evt => {
+        this._onLayoutChange = items => {
             this.setState({
-                selectMode: false,
-                selectedMode: false,
-                selectionRowStart: 0,
-                selectionRowEnd: 0,
-                selectionColStart: 0,
-                selectionColEnd: 0
+                items: items
             })
         }
 
-        this._onSelectionStart = evt => {
-
-            var coordinates = evt.target.id.split('/')
-
+        this._onAddItem = () => {
             this.setState({
-                selectMode: true,
-                selectionRowStart: coordinates[0],
-                selectionRowEnd: coordinates[0],
-                selectionColStart: coordinates[1],
-                selectionColEnd: coordinates[1]
-            })
+                // Add a new item. It must have a unique key!
+                items: this.state.items.concat({
+                    i: 'n' + this.state.newCounter,
+                    x: this.state.items.length * 2 % (this.state.cols || 12),
+                    y: Infinity,
+                    w: 2,
+                    h: 2
+                }),
+                // Increment the counter to ensure key is always unique.
+                newCounter: this.state.newCounter + 1
+            });
+        },
+
+        this._onRemoveItem = i => {
+            console.log('removing', i);
+            this.setState({items: _.reject(this.state.items, {i: i})});
         }
 
-        this._onSelectionMove = evt => {
+        this._createElement = el => {
+            var removeStyle = {
+                position: 'absolute',
+                right: '2px',
+                top: 0,
+                cursor: 'pointer'
+            };
 
-            if (!this.state.selectMode) {
-                return
-            }
+            var i = el.add ? '+' : el.i;
 
-            var coordinates = evt.target.id.split('/')
-
-            this.setState({
-                selectionRowStart: Math.min(this.state.selectionRowStart, coordinates[0]),
-                selectionRowEnd: Math.max(this.state.selectionRowStart, coordinates[0]),
-                selectionColStart: Math.min(this.state.selectionColStart, coordinates[1]),
-                selectionColEnd: Math.max(this.state.selectionColStart, coordinates[1])
-            })
+            el.isResizeable = false
+            return (
+                <div key={i} data-grid={el}>
+                    <span className="text">{i}</span>
+                    <span className="remove" style={removeStyle} onClick={this._onRemoveItem.bind(this, i)}>x</span>
+                </div>
+            );
         }
-
-        this._onSelectionStop = evt => {
-
-            var coordinates = evt.target.id.split('/')
-
-            this.setState({
-                selectMode: false,
-                selectedMode: true,
-                selectionRowStart: Math.min(this.state.selectionRowStart, coordinates[0]),
-                selectionRowEnd: Math.max(this.state.selectionRowStart, coordinates[0]),
-                selectionColStart: Math.min(this.state.selectionColStart, coordinates[1]),
-                selectionColEnd: Math.max(this.state.selectionColStart, coordinates[1])
-            })
-        }
-
-        this._onValueChange = evt => {
-            var value = evt.target.value;
-            var invalid = false;
-            try {
-                katex.__parse(value);
-            } catch (e) {
-                invalid = true;
-            } finally {
-                this.setState({
-                    invalidTeX: invalid,
-                    texValue: value,
-                });
-            }
-        };
 
         this._save = () => {
             var entityKey = this.props.block.getEntityAt(0);
-            Entity.mergeData(entityKey, {content: this.state.texValue});
+            Entity.mergeData(entityKey, {components: this.state.components});
             this.setState({
-                invalidTeX: false,
                 editMode: false,
-                texValue: null,
             }, this._finishEdit);
         };
 
@@ -176,19 +162,6 @@ export default class Block extends React.Component {
         };
     }
 
-    _getRows() {
-        console.log("Entity ", this.props.block)
-        return Entity
-            .get(this.props.block.getEntityAt(0))
-            .getData()['rows'];
-    }
-
-    _getCols() {
-        return Entity
-            .get(this.props.block.getEntityAt(0))
-            .getData()['cols']
-    }
-
     render() {
         var className = 'block-editor';
         if (this.state.editMode) {
@@ -197,49 +170,31 @@ export default class Block extends React.Component {
 
         var output = null;
         var editPanel = null;
-        var divStyle = null;
 
         if (this.state.editMode) {
             editPanel =
                 <div className="block-editor-panel">
-                    <div className="grid" onBlur={this._onSelectionRemove} onMouseDown={this._onSelectionStart} onMouseMove={this._onSelectionMove} onMouseUp={this._onSelectionStop}>
-                        {this.state.rows.map(function(row, rowIdx) {
-                            return this.state.cols.map(function(col, colIdx) {
-                                var map = (rowIdx + 1) + "/" + (colIdx + 1) + "/" + (rowIdx + 2) + "/" + (colIdx + 2);
-                                var isSelected =
-                                    (rowIdx + 1) >= this.state.selectionRowStart &&
-                                    (rowIdx + 1) <= this.state.selectionRowEnd &&
-                                    (colIdx + 1) >= this.state.selectionColStart &&
-                                    (colIdx + 1) <= this.state.selectionColEnd
-
-                                var style = {
-                                    minWidth: "50px",
-                                    minHeight: "50px",
-                                    gridArea: map,
-                                    backgroundColor: isSelected ? "#cccccc" : "#ffffff"
-                                };
-
-                                return (<div id={map} key={map} style={style}></div>);
-                            }.bind(this))
-                        }.bind(this))}
-                    </div>
+                    <ResponsiveReactGridLayout onLayoutChange={this._onLayoutChange} onBreakpointChange={this._onBreakpointChange} {...this.props}>
+                        {_.map(this.state.items, this._createElement)}
+                    </ResponsiveReactGridLayout>
 
                     <div className="block-editor-buttons">
-                        <FloatingActionButton disabled={!this.state.selectedMode} onClick={this._add}>
+                        <FloatingActionButton onClick={this._onAddItem}>
                             <ContentAdd />
+                        </FloatingActionButton>
+
+                        <FloatingActionButton onClick={this._save}>
+                            <ContentSave />
                         </FloatingActionButton>
                     </div>
                 </div>;
-
-            divStyle = {
-                backgroundColor: "#cccccc",
-                opacity: 0.8
-            }
         } else {
             output =
-                <HTMLOutput onClick={this._onClick}>
-                    {this.props.block.getText()}
-                </HTMLOutput>
+                <div onClick={this._onClick}>
+                    <ResponsiveReactGridLayout {...this.props} isResizeable={false}>
+                        {_.map(this.state.items, this._createElement)}
+                    </ResponsiveReactGridLayout>
+                </div>
         }
 
         return (
@@ -250,3 +205,11 @@ export default class Block extends React.Component {
         );
   }
 }
+
+Block.defaultProps = {
+    className: "layout",
+    cols: {lg: 12, md: 10, sm: 6, xs: 4, xxs: 2},
+    rowHeight: 10
+}
+
+export default Block;

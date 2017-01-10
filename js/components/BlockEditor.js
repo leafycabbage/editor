@@ -18,11 +18,13 @@ import Draft from 'draft-js';
 import Immutable from 'immutable';
 import {Map} from 'immutable';
 import React from 'react';
+import ReactDOMServer from 'react-dom/server';
 
 import Block from './Block';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 
-import {content, blockRenderMap, extendedBlockRenderMap} from '../data/content';
+import {convertFromHTML} from '../utils/convertFromHTML';
+import {extendedBlockRenderMap} from '../data/blockRenderMap';
 import {insertBlock} from '../modifiers/insertBlock';
 import {removeBlock} from '../modifiers/removeBlock';
 
@@ -30,35 +32,22 @@ var {Editor, EditorState, RichUtils} = Draft;
 
 export default class BlockEditor extends React.Component {
     constructor(props) {
-
         super(props);
 
+        var childrenInnerHTML = '';
+        if (typeof props.children !== 'string') {
+            childrenInnerHTML = ReactDOMServer.renderToStaticMarkup(props.children)
+        } else {
+            childrenInnerHTML = props.children
+        }
+
         this.state = {
-            editorState: EditorState.createWithContent(content),
+            editorState: EditorState.createWithContent(convertFromHTML(childrenInnerHTML)),
             liveTeXEdits: Map(),
         };
 
         this._blockRenderer = (block) => {
-            console.log("We have a new type ", block.getType())
-            if (block.getType() === 'atomic') {
-                return {
-                    component: Block,
-                    editable: false,
-                    props: {
-                        onStartEdit: (blockKey) => {
-                            var {liveTeXEdits} = this.state;
-                            this.setState({liveTeXEdits: liveTeXEdits.set(blockKey, true)});
-                        },
-                        onFinishEdit: (blockKey) => {
-                            var {liveTeXEdits} = this.state;
-                            this.setState({liveTeXEdits: liveTeXEdits.remove(blockKey)});
-                        },
-                        onRemove: (blockKey) => this._removeTeX(blockKey),
-                    },
-                };
-            }
             if (block.getType() == 'block') {
-                console.log(block.getText())
                 return {
                     component: Block,
                     editable: false,
@@ -120,12 +109,11 @@ export default class BlockEditor extends React.Component {
     ref="editor"
     spellCheck={true}*/
     render() {
-        console.log(blockRenderMap);
         return (
             <MuiThemeProvider>
                 <div className="TexEditor-container">
                     <div className="TeXEditor-root">
-                        <div className="TeXEditor-editor" onClick={this._focus}>
+                        <div className="TeXEditor-editor" >
                             <Editor
                                 blockRenderMap={extendedBlockRenderMap}
                                 blockRendererFn={this._blockRenderer}
