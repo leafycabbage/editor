@@ -101,13 +101,6 @@ export default class BlockEditor extends React.Component {
     * While editing TeX, set the Draft editor to read-only. This allows us to
     * have a textarea within the DOM.
     */
-    /*blockRendererFn={this._blockRenderer}
-    handleKeyCommand={this._handleKeyCommand}
-    onChange={this._onChange}
-    placeholder="Start a document..."
-    readOnly={this.state.liveTeXEdits.count()}
-    ref="editor"
-    spellCheck={true}*/
     render() {
         return (
             <MuiThemeProvider>

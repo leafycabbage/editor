@@ -17,54 +17,16 @@
 import _ from 'lodash';
 import React from 'react';
 import {Entity} from 'draft-js';
+
+import BlockItem from './BlockItem.js';
+
 import FloatingActionButton from 'material-ui/FloatingActionButton';
 import ContentAdd from 'material-ui/svg-icons/content/add';
 import ContentSave from 'material-ui/svg-icons/content/save';
-import BlockEditor from './BlockEditor.js';
 
 import {WidthProvider, Responsive} from 'react-grid-layout';
 
 var ResponsiveReactGridLayout = WidthProvider(Responsive);
-
-class HTMLOutput extends React.Component {
-    constructor(props) {
-        super(props);
-        this._timer = null;
-    }
-
-    _update() {
-        if (this._timer) {
-            clearTimeout(this._timer);
-        }
-    }
-
-    componentDidMount() {
-        this._update();
-    }
-
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.content !== this.props.content) {
-            this._update();
-        }
-    }
-
-    componentWillUnmount() {
-        clearTimeout(this._timer);
-        this._timer = null;
-    }
-
-    render() {
-        // <ResponsiveReactGridLayout>
-        //     {this.props.children}
-        //     {_.map(this.state.items, this._createElement)}
-        // </ResponsiveReactGridLayout>
-        return (
-            <div ref="container" style={this.props.style} onClick={this.props.onClick}>
-                {this.props.children}
-            </div>
-        )
-    }
-}
 
 class Block extends React.Component {
     constructor(props) {
@@ -85,8 +47,6 @@ class Block extends React.Component {
         };
 
         this._onClick = () => {
-
-            console.log('HERE we are')
             if (this.state.editMode) {
                 return;
             }
@@ -109,43 +69,23 @@ class Block extends React.Component {
                 // Add a new item. It must have a unique key!
                 items: this.state.items.concat({
                     i: 'n' + this.state.newCounter,
-                    x: this.state.items.length * 2 % (this.state.cols || 12),
+                    x: 0,
                     y: Infinity,
-                    w: 2,
-                    h: 2
+                    w: 12,
+                    h: 5
                 }),
                 // Increment the counter to ensure key is always unique.
                 newCounter: this.state.newCounter + 1
             });
         },
 
-        this._onRemoveItem = i => {
-            console.log('removing', i);
-            this.setState({items: _.reject(this.state.items, {i: i})});
-        }
-
-        this._createElement = el => {
-            var removeStyle = {
-                position: 'absolute',
-                right: '2px',
-                top: 0,
-                cursor: 'pointer'
-            };
-
-            var i = el.add ? '+' : el.i;
-
-            el.isResizeable = false
-            return (
-                <div key={i} data-grid={el}>
-                    <span className="text">{i}</span>
-                    <span className="remove" style={removeStyle} onClick={this._onRemoveItem.bind(this, i)}>x</span>
-                </div>
-            );
-        }
-
         this._save = () => {
-            var entityKey = this.props.block.getEntityAt(0);
-            Entity.mergeData(entityKey, {components: this.state.components});
+
+            if (this.props.block) {
+                var entityKey = this.props.block.getEntityAt(0);
+                Entity.mergeData(entityKey, {components: this.state.components});
+            }
+            
             this.setState({
                 editMode: false,
             }, this._finishEdit);
@@ -171,11 +111,19 @@ class Block extends React.Component {
         var output = null;
         var editPanel = null;
 
+        var items = this.state.items.map(function(item) {
+            return (
+                <BlockItem key={item.i} data-grid={{x: item.x, y: item.y, w: item.w, h: item.h}}>
+                    {item.i}
+                </BlockItem>
+            )
+        })
+
         if (this.state.editMode) {
             editPanel =
                 <div className="block-editor-panel">
                     <ResponsiveReactGridLayout onLayoutChange={this._onLayoutChange} onBreakpointChange={this._onBreakpointChange} {...this.props}>
-                        {_.map(this.state.items, this._createElement)}
+                        {items}
                     </ResponsiveReactGridLayout>
 
                     <div className="block-editor-buttons">
@@ -191,8 +139,8 @@ class Block extends React.Component {
         } else {
             output =
                 <div onClick={this._onClick}>
-                    <ResponsiveReactGridLayout {...this.props} isResizeable={false}>
-                        {_.map(this.state.items, this._createElement)}
+                    <ResponsiveReactGridLayout {...this.props} isDraggable={false} isResizable={false}>
+                        {items}
                     </ResponsiveReactGridLayout>
                 </div>
         }
