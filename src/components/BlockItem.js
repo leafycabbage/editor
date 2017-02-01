@@ -35,13 +35,16 @@ class BlockItem extends PureComponent {
         e.preventDefault()
 
         const { addChild, createBlock, id } = this.props
-        const childId = createBlock({
+        const childId = createBlock().nodeId
+
+        // TODO - need to find a way to choose the best position for new child
+        addChild(id, {
+            i: childId, ...{
             x: 0,
             y: 0,
             w: 12,
             h: 2
-        }).nodeId
-        addChild(id, childId)
+        }})
     }
 
     handleRemoveClick = e => {
@@ -52,17 +55,20 @@ class BlockItem extends PureComponent {
         deleteBlock(id)
     }
 
-    handleLayoutChange(layout, layouts) {
-        this.setState({layouts})
-        this.props.handleLayoutChange(layout, layouts);
+    handleLayoutChange = (layout, layouts) => {
+
+        if (layout.length === 0) return;
+        const { changeLayout, id } = this.props
+
+        changeLayout(id, layout)
     }
 
-    renderChild = i => {
-        const {i} = this.props
+    renderChild = layout => {
+        const {id} = this.props
 
         return (
-            <div key={childId}>
-                <ConnectedBlock id={childId} parentId={id} />
+            <div key={layout.i}>
+                <ConnectedBlock id={layout.i} parentId={id} />
             </div>
         )
     }
@@ -74,7 +80,9 @@ class BlockItem extends PureComponent {
             width: "100%",
             height: "100%"
         }
-        console.log(layouts)
+
+        const currentLayout = layouts && layouts.lg || []
+
         return (
             <div onClick={this.handleSelectClick} style={style}>
                 {id} - {selected ? "Is selected" : "Is not selected"}
@@ -84,11 +92,11 @@ class BlockItem extends PureComponent {
                     isResizable={selected}
                     isDraggable={selected}
                 >
-                    {layouts.lg.map(this.renderChild)}
+                    {currentLayout.map(this.renderChild)}
                 </ResponsiveReactGridLayout>
 
                 <a href="#" onClick={this.handleAddChildClick}>
-                  New Layout
+                  Add Child
                 </a>
             </div>
         )
@@ -101,7 +109,6 @@ function mapStateToProps(state, ownProps) {
     console.log(state)
     return {
         selected: editor.selectedNode === ownProps.id,
-        layout: layouts,
         ...layout[ownProps.id]
     }
 }

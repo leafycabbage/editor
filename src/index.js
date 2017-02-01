@@ -32,17 +32,17 @@ let tree = {
         root: {
             id: "root",
             layouts: {
-                lg: [{
-                    i: "test",
-                    x: 0,
-                    y: 0,
-                    w: 12,
-                    h: 2
-                }]
+                lg: [{i: "child1", x: 0, y: 0, w: 8, h: 2}, {i: "child2", x: 8, y: 0, w: 4, h: 2}]
             }
         },
-        test: {
-            id: "test"
+        child1: {
+            id: "child1",
+            layouts: {
+                lg: []
+            }
+        },
+        child2: {
+            id: "child2"
         }
     }
 }
@@ -52,7 +52,7 @@ const store = createStore(reducer, tree)
 ReactDOM.render(
     <MuiThemeProvider>
         <Provider store={store}>
-            <BlockItem id="root" data-grid={{x: 0, y: 0, w: 12, h: 2}}>
+            <BlockItem id="root">
                 Yoohoo
             </BlockItem>
         </Provider>

@@ -1,4 +1,4 @@
-import { CREATE_BLOCK, DELETE_BLOCK, ADD_CHILD, REMOVE_CHILD } from '../actions'
+import { CREATE_BLOCK, DELETE_BLOCK, ADD_CHILD, REMOVE_CHILD, CHANGE_LAYOUT } from '../actions'
 
 const children = (state, action) => {
 
@@ -27,6 +27,12 @@ const node = (state, action) => {
                     lg: children(state.layouts.lg, action)
                 }
             }
+        case CHANGE_LAYOUT:
+            console.log(action.layout)
+            return {
+                ...state
+            }
+
         default:
             return state
     }

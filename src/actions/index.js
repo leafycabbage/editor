@@ -3,6 +3,7 @@ export const CREATE_BLOCK = 'CREATE_BLOCK'
 export const DELETE_BLOCK = 'DELETE_BLOCK'
 export const ADD_CHILD = 'ADD_CHILD'
 export const REMOVE_CHILD = 'REMOVE_CHILD'
+export const CHANGE_LAYOUT = 'CHANGE_LAYOUT'
 
 export const select = (nodeId) => ({
     type: SELECT,
@@ -13,17 +14,23 @@ let nextId = 0
 export const createBlock = (layout) => ({
     type: CREATE_BLOCK,
     nodeId: `new_${nextId++}`,
-    layout: []
+    layout: layout
 })
 
 export const addChild = (nodeId, childId) => ({
-  type: ADD_CHILD,
-  nodeId,
-  childId
+    type: ADD_CHILD,
+    nodeId,
+    childId
 })
 
 export const removeChild = (nodeId, childId) => ({
-  type: REMOVE_CHILD,
-  nodeId,
-  childId
+    type: REMOVE_CHILD,
+    nodeId,
+    childId
+})
+
+export const changeLayout = (nodeId, layout) => ({
+    type: CHANGE_LAYOUT,
+    nodeId,
+    layout
 })
