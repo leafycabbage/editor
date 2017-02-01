@@ -48,11 +48,18 @@ export default class BlockEditor extends React.Component {
 
         this._blockRenderer = (block) => {
             if (block.getType() == 'block') {
+
                 return {
                     component: Block,
                     editable: false,
                     props: {
                         children: block.getText(),
+                        isActiveKey: (key) => {
+                            return this.state.activeKey == key
+                        },
+                        onSelectionChange: (key) => {
+                            this.setState({activeKey: key});
+                        },
                         onStartEdit: (blockKey) => {
                             var {liveTeXEdits} = this.state;
                             this.setState({liveTeXEdits: liveTeXEdits.set(blockKey, true)});

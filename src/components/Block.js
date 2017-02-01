@@ -80,12 +80,11 @@ class Block extends React.Component {
         },
 
         this._save = () => {
-
             if (this.props.block) {
                 var entityKey = this.props.block.getEntityAt(0);
                 Entity.mergeData(entityKey, {components: this.state.components});
             }
-            
+
             this.setState({
                 editMode: false,
             }, this._finishEdit);
@@ -95,10 +94,10 @@ class Block extends React.Component {
             this.props.blockProps.onRemove(this.props.block.getKey());
         };
         this._startEdit = () => {
-            this.props.blockProps.onStartEdit(this.props.block.getKey());
+            this.props.blockProps && this.props.blockProps.onStartEdit(this.props.block.getKey());
         };
         this._finishEdit = () => {
-            this.props.blockProps.onFinishEdit(this.props.block.getKey());
+            this.props.blockProps && this.props.blockProps.onFinishEdit(this.props.block.getKey());
         };
     }
 
@@ -111,18 +110,20 @@ class Block extends React.Component {
         var output = null;
         var editPanel = null;
 
+        var onSelect = this.props.blockProps && this.props.blockProps.onSelect || this.props.onSelect
+
         var items = this.state.items.map(function(item) {
             return (
-                <BlockItem key={item.i} data-grid={{x: item.x, y: item.y, w: item.w, h: item.h}}>
+                <BlockItem onSelect={onSelect} key={item.i} data-grid={{x: item.x, y: item.y, w: item.w, h: item.h}}>
                     {item.i}
                 </BlockItem>
             )
-        })
+        }.bind(this))
 
         if (this.state.editMode) {
             editPanel =
                 <div className="block-editor-panel">
-                    <ResponsiveReactGridLayout onLayoutChange={this._onLayoutChange} onBreakpointChange={this._onBreakpointChange} {...this.props}>
+                    <ResponsiveReactGridLayout onDragStart={this._startEdit} onLayoutChange={this._onLayoutChange} onBreakpointChange={this._onBreakpointChange} {...this.props}>
                         {items}
                     </ResponsiveReactGridLayout>
 
@@ -152,6 +153,10 @@ class Block extends React.Component {
             </div>
         );
   }
+}
+
+Block.propTypes = {
+    onSelect: React.PropTypes.func
 }
 
 Block.defaultProps = {

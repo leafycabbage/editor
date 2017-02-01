@@ -12,8 +12,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-'use strict';
-
 import BlockEditor from './components/BlockEditor';
 import BlockItem from './components/BlockItem';
 
@@ -23,21 +21,50 @@ import ReactDOM from 'react-dom';
 import {WidthProvider, Responsive} from 'react-grid-layout';
 var ResponsiveReactGridLayout = WidthProvider(Responsive);
 
-/*
-ReactDOM.render(
-    <ResponsiveReactGridLayout isResizable={true} isDraggable={false} className="layout">
-        <BlockItem key="a" data-grid={{x: 0, y: 0, w: 12, h: 2}}>
-            Yoohoo
-        </BlockItem>
-    </ResponsiveReactGridLayout>,
-    document.getElementById('test')
-);*/
+import { createStore } from 'redux'
+import { Provider } from 'react-redux'
+import reducer from './reducers'
+
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+
+let tree = {
+    layout: {
+        root: {
+            id: "root",
+            layouts: {
+                lg: [{
+                    i: "test",
+                    x: 0,
+                    y: 0,
+                    w: 12,
+                    h: 2
+                }]
+            }
+        },
+        test: {
+            id: "test"
+        }
+    }
+}
+
+const store = createStore(reducer, tree)
 
 ReactDOM.render(
+    <MuiThemeProvider>
+        <Provider store={store}>
+            <BlockItem id="root" data-grid={{x: 0, y: 0, w: 12, h: 2}}>
+                Yoohoo
+            </BlockItem>
+        </Provider>
+    </MuiThemeProvider>,
+    document.getElementById('test')
+);
+
+/*ReactDOM.render(
   <BlockEditor>
     <section>
         This is the main section
     </section>
   </BlockEditor>,
   document.getElementById('target')
-);
+);*/
