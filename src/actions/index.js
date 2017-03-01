@@ -1,36 +1,61 @@
 export const SELECT = 'SELECT'
-export const CREATE_BLOCK = 'CREATE_BLOCK'
-export const DELETE_BLOCK = 'DELETE_BLOCK'
-export const ADD_CHILD = 'ADD_CHILD'
-export const REMOVE_CHILD = 'REMOVE_CHILD'
-export const CHANGE_LAYOUT = 'CHANGE_LAYOUT'
 
-export const select = (nodeId) => ({
+export const select = (nodeType, nodeId) => ({
     type: SELECT,
-    nodeId
+    nodeType: nodeType,
+    nodeId: nodeId
 })
 
-let nextId = 0
-export const createBlock = (layout) => ({
-    type: CREATE_BLOCK,
-    nodeId: `new_${nextId++}`,
-    layout: layout
+export const CREATE_CONTENT = 'CREATE_CONTENT'
+export const MODIFY_CONTENT = 'MODIFY_CONTENT'
+
+let contentId = 0
+export const createContent = () => ({
+    type: CREATE_CONTENT,
+    layoutId: `content_${contentId++}`
 })
 
-export const addChild = (nodeId, childId) => ({
-    type: ADD_CHILD,
-    nodeId,
-    childId
+export const modifyContent = (contentId, content) => ({
+    type: MODIFY_CONTENT,
+    contentId,
+    content
 })
 
-export const removeChild = (nodeId, childId) => ({
-    type: REMOVE_CHILD,
-    nodeId,
-    childId
-})
+export const CREATE_LAYOUT = 'CREATE_LAYOUT'
+export const MODIFY_LAYOUT = 'MODIFY_LAYOUT'
 
-export const changeLayout = (nodeId, layout) => ({
-    type: CHANGE_LAYOUT,
-    nodeId,
+let layoutId = 0
+export const createLayout = (layout) => ({
+    type: CREATE_LAYOUT,
+    layoutId: `layout_${layoutId++}`,
     layout
+})
+
+export const modifyLayout = (layoutId, layout) => ({
+    type: MODIFY_LAYOUT,
+    layoutId,
+    layout
+})
+
+export const CREATE_BLOCK = 'CREATE_BLOCK'
+export const ADD_CHILD = 'ADD_CHILD'
+export const ADD_CONTENT = 'ADD_CONTENT'
+
+let blockId = 0
+export const createBlock = (contentId) => ({
+    type: CREATE_BLOCK,
+    blockId: `block_${blockId++}`
+})
+
+export const addChild = (blockId, childId, layoutId) => ({
+    type: ADD_CHILD,
+    blockId,
+    childId,
+    layoutId
+})
+
+export const addContent = (blockId, contentId) => ({
+    type: ADD_CONTENT,
+    blockId,
+    contentId
 })

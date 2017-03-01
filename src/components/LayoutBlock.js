@@ -13,38 +13,40 @@
  */
 
 import React from 'react';
-import {Component} from 'react';
-import {WidthProvider, Responsive} from 'react-grid-layout';
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
+import { WidthProvider, Responsive } from 'react-grid-layout';
 import PureComponent from './PureComponent';
+import Block from './Block';
 import * as actions from '../actions'
 
 var ResponsiveReactGridLayout = WidthProvider(Responsive);
 
-class BlockItem extends PureComponent {
+class LayoutBlock extends PureComponent {
 
     handleSelectClick = e => {
         e.preventDefault()
         e.stopPropagation()
 
-        const { select, parentId } = this.props
-        select(parentId)
+        const { select, id } = this.props
+
+        console.log('selecting this layout ', id)
+        select("LAYOUT", id)
     }
 
     handleAddChildClick = e => {
         e.preventDefault()
 
-        const { addChild, createBlock, id } = this.props
-        const childId = createBlock().nodeId
-
-        // TODO - need to find a way to choose the best position for new child
-        addChild(id, {
-            i: childId, ...{
+        const { addChild, createLayout, createBlock, id } = this.props
+        const layoutId = createLayout({
             x: 0,
             y: 0,
             w: 12,
             h: 2
-        }})
+        }).layoutId
+
+        const childId = createBlock().blockId
+
+        addChild(id, childId , layoutId)
     }
 
     handleRemoveClick = e => {
@@ -56,11 +58,11 @@ class BlockItem extends PureComponent {
     }
 
     handleLayoutChange = (layout, layouts) => {
-
         if (layout.length === 0) return;
-        const { changeLayout, id } = this.props
 
-        changeLayout(id, layout)
+        //const { changeLayout, id } = this.props
+
+        //changeLayout(id, layout)
     }
 
     renderChild = layout => {
@@ -68,31 +70,33 @@ class BlockItem extends PureComponent {
 
         return (
             <div key={layout.i}>
-                <ConnectedBlock id={layout.i} parentId={id} />
+                <Block id={layout.i} parentId={id} />
             </div>
         )
     }
 
     render() {
-        const { id, selected, layouts, parentId, childIds } = this.props
+        const { id, selected, layouts } = this.props
 
         const style = {
             width: "100%",
             height: "100%"
         }
 
-        const currentLayout = layouts && layouts.lg || []
+        let safeLayouts = {
+            lg: [],
+            ...layouts
+        }
 
         return (
             <div onClick={this.handleSelectClick} style={style}>
-                {id} - {selected ? "Is selected" : "Is not selected"}
                 <ResponsiveReactGridLayout
-                    layouts={layouts}
+                    layouts={safeLayouts}
                     onLayoutChange={this.handleLayoutChange}
                     isResizable={selected}
                     isDraggable={selected}
                 >
-                    {currentLayout.map(this.renderChild)}
+                    {safeLayouts.lg.map(this.renderChild)}
                 </ResponsiveReactGridLayout>
 
                 <a href="#" onClick={this.handleAddChildClick}>
@@ -104,14 +108,14 @@ class BlockItem extends PureComponent {
 }
 
 function mapStateToProps(state, ownProps) {
-    const { editor, layout, layouts } = state
+    const { editor, layouts } = state
+    const { type, id } = editor.selected
 
-    console.log(state)
-    return {
-        selected: editor.selectedNode === ownProps.id,
-        ...layout[ownProps.id]
+    return  {
+        selected: type === "LAYOUT" && id === ownProps.id,
+        layouts: layouts[ownProps.id]
     }
 }
 
-const ConnectedBlock = connect(mapStateToProps, actions)(BlockItem)
+const ConnectedBlock = connect(mapStateToProps, actions)(LayoutBlock)
 export default ConnectedBlock

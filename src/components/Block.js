@@ -12,157 +12,90 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-'use strict';
-
-import _ from 'lodash';
 import React from 'react';
-import {Entity} from 'draft-js';
-
-import BlockItem from './BlockItem.js';
-
-import FloatingActionButton from 'material-ui/FloatingActionButton';
-import ContentAdd from 'material-ui/svg-icons/content/add';
-import ContentSave from 'material-ui/svg-icons/content/save';
-
 import {WidthProvider, Responsive} from 'react-grid-layout';
+import { connect } from 'react-redux';
+import PureComponent from './PureComponent';
+import LayoutBlock from './LayoutBlock';
+import ContentBlock from './ContentBlock';
+import * as actions from '../actions'
 
 var ResponsiveReactGridLayout = WidthProvider(Responsive);
 
-class Block extends React.Component {
-    constructor(props) {
-        super(props);
+class Block extends PureComponent {
 
-        this.state = {
-            editMode: false,
+    handleAddChildClick = e => {
+        e.preventDefault()
 
-            items: [{
-                i: "Initial",
-                x: 0,
-                y: 0,
-                w: 12,
-                h: 5
-            }],
+        const { addChild, createLayout, createBlock, id } = this.props
+        const layoutId = createLayout({
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 2
+        }).layoutId
 
-            newCounter: 0
-        };
+        const childId = createBlock().blockId
 
-        this._onClick = () => {
-            if (this.state.editMode) {
-                return;
-            }
+        addChild(id, childId , layoutId)
+    }
 
-            this.setState({
-                editMode: true
-            }, () => {
-                this._startEdit();
-            });
-        };
+    handleRemoveClick = e => {
+        e.preventDefault()
 
-        this._onLayoutChange = items => {
-            this.setState({
-                items: items
-            })
-        }
+        const { removeChild, deleteBlock, parentId, id } = this.props
+        removeChild(parentId, id)
+        deleteBlock(id)
+    }
 
-        this._onAddItem = () => {
-            this.setState({
-                // Add a new item. It must have a unique key!
-                items: this.state.items.concat({
-                    i: 'n' + this.state.newCounter,
-                    x: 0,
-                    y: Infinity,
-                    w: 12,
-                    h: 5
-                }),
-                // Increment the counter to ensure key is always unique.
-                newCounter: this.state.newCounter + 1
-            });
-        },
+    handleLayoutChange = (layout, layouts) => {
+        if (layout.length === 0) return;
 
-        this._save = () => {
-            if (this.props.block) {
-                var entityKey = this.props.block.getEntityAt(0);
-                Entity.mergeData(entityKey, {components: this.state.components});
-            }
+        //const { changeLayout, id } = this.props
 
-            this.setState({
-                editMode: false,
-            }, this._finishEdit);
-        };
-
-        this._remove = () => {
-            this.props.blockProps.onRemove(this.props.block.getKey());
-        };
-        this._startEdit = () => {
-            this.props.blockProps && this.props.blockProps.onStartEdit(this.props.block.getKey());
-        };
-        this._finishEdit = () => {
-            this.props.blockProps && this.props.blockProps.onFinishEdit(this.props.block.getKey());
-        };
+        //changeLayout(id, layout)
     }
 
     render() {
-        var className = 'block-editor';
-        if (this.state.editMode) {
-            className += ' block-editor-active';
+        const { id, selected, layoutId, contentId } = this.props
+
+        const style = {
+            width: "100%",
+            height: "100%"
         }
 
-        var output = null;
-        var editPanel = null;
+        let contentBlock = null;
+        if (typeof contentId !== "undefined") {
+            contentBlock = <ContentBlock id={contentId} />
+        }
 
-        var onSelect = this.props.blockProps && this.props.blockProps.onSelect || this.props.onSelect
-
-        var items = this.state.items.map(function(item) {
-            return (
-                <BlockItem onSelect={onSelect} key={item.i} data-grid={{x: item.x, y: item.y, w: item.w, h: item.h}}>
-                    {item.i}
-                </BlockItem>
-            )
-        }.bind(this))
-
-        if (this.state.editMode) {
-            editPanel =
-                <div className="block-editor-panel">
-                    <ResponsiveReactGridLayout onDragStart={this._startEdit} onLayoutChange={this._onLayoutChange} onBreakpointChange={this._onBreakpointChange} {...this.props}>
-                        {items}
-                    </ResponsiveReactGridLayout>
-
-                    <div className="block-editor-buttons">
-                        <FloatingActionButton onClick={this._onAddItem}>
-                            <ContentAdd />
-                        </FloatingActionButton>
-
-                        <FloatingActionButton onClick={this._save}>
-                            <ContentSave />
-                        </FloatingActionButton>
-                    </div>
-                </div>;
-        } else {
-            output =
-                <div onClick={this._onClick}>
-                    <ResponsiveReactGridLayout {...this.props} isDraggable={false} isResizable={false}>
-                        {items}
-                    </ResponsiveReactGridLayout>
-                </div>
+        let layoutBlock = null;
+        if (typeof layoutId !== "undefined") {
+            layoutBlock = <LayoutBlock id={layoutId} />
         }
 
         return (
-            <div className={className}>
-                {output}
-                {editPanel}
+            <div style={style}>
+                {contentBlock}
+                {layoutBlock}
             </div>
-        );
-  }
+        )
+    }
 }
 
-Block.propTypes = {
-    onSelect: React.PropTypes.func
+function mapStateToProps(state, ownProps) {
+    const { editor, map } = state
+
+    let current = map[ownProps.id]
+    let contentId = current.contentId
+    let layoutId = current.layoutId
+
+    return  {
+        selected: editor.selectedNode === ownProps.id,
+        contentId: contentId,
+        layoutId: layoutId
+    }
 }
 
-Block.defaultProps = {
-    className: "layout",
-    cols: {lg: 12, md: 10, sm: 6, xs: 4, xxs: 2},
-    rowHeight: 10
-}
-
-export default Block;
+const ConnectedBlock = connect(mapStateToProps, actions)(Block)
+export default ConnectedBlock
